@@ -1,0 +1,73 @@
+services:
+  app-monitor:
+    build: .
+    container_name: app-monitor
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/monitoring_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_BOOT_ADMIN_CLIENT_URL=http://admin-server:8088
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=*
+    depends_on:
+      - postgres
+      - admin-server
+    networks:
+      - monitoring-net
+
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    environment:
+      - POSTGRES_DB=monitoring_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - monitoring-net
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - monitoring-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_ SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-net
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+  admin-server:
+    build: ./admin-server
+    container_name: admin-server
+    ports:
+      - "8088:8088"
+    networks:
+      - monitoring-net
+
+networks:
+  monitoring-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  grafana-storage:

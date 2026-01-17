@@ -1,0 +1,5 @@
+com/example/monitoring/model/Product.class
+com/example/monitoring/controller/ProductController.class
+com/example/monitoring/repository/ProductRepository.class
+com/example/monitoring/MonitoringApplication.class
+com/example/monitoring/DataSeeder.class
